@@ -184,23 +184,3 @@ pub async fn stream(path: &str, lang: &str) -> anyhow::Result<mpsc::Receiver<Str
     });
     Ok(recv)
 }
-
-pub async fn stream_lot(paths: &[&str], lang: &str) -> mpsc::Receiver<String> {
-    let (send, recv) = mpsc::channel(10000);
-    for path in paths {
-        if let Ok(mut recv) = stream(path, lang).await {
-            println!("{path} started");
-            let send = send.clone();
-            tokio::spawn(async move {
-                while let Some(d) = recv.recv().await {
-                    if let Err(e) = send.send(d).await {
-                        println!("{e}");
-                    };
-                }
-            });
-        } else {
-            println!("{path} failed.");
-        }
-    }
-    recv
-}

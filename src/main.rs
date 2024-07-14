@@ -28,17 +28,23 @@ async fn main_inner() -> anyhow::Result<()> {
     ))
     .await?;
     let mut f = ZstdEncoder::with_quality(BufWriter::new(f), Level::Best);
-    let mut stream = cc_stream::stream_lot(&all, "ja").await;
-    while let Some(s) = stream.recv().await {
-        f.write(
-            stringify(object! {
-                html: s,
-            })
-            .as_bytes(),
-        )
-        .await?;
-        f.write("\n".as_bytes()).await?;
-        f.flush().await?;
+    for a in all {
+        if let Ok(mut stream) = cc_stream::stream(&a, "ja").await {
+            while let Some(s) = stream.recv().await {
+                f.write(
+                    stringify(object! {
+                        html: s,
+                    })
+                    .as_bytes(),
+                )
+                .await?;
+                f.write("\n".as_bytes()).await?;
+                f.flush().await?;
+            }
+            println!("Success: {a}");
+        } else {
+            println!("Failed: {a}");
+        }
     }
     f.shutdown().await?;
     Ok(())
