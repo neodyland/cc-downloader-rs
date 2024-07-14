@@ -1,4 +1,5 @@
 mod cc_stream;
+mod fast_dl;
 mod ft;
 mod gz_dec;
 mod html2md;

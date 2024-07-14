@@ -1,5 +1,4 @@
 use futures_util::StreamExt;
-use reqwest::get;
 use std::collections::HashMap;
 use tl::{parse, ParserOptions};
 use tokio::sync::mpsc;
@@ -7,6 +6,7 @@ use tokio_util::io::StreamReader;
 use unicode_normalization::UnicodeNormalization;
 
 use crate::{
+    fast_dl::parrarel_stream,
     ft::{get_model, LanguagePredictor},
     gz_dec::GzipCmdParser,
     warc::WarcParser,
@@ -137,17 +137,11 @@ fn split_headers(s: &str) -> anyhow::Result<(HashMap<String, String>, String)> {
 
 pub async fn stream(path: &str, lang: &str) -> anyhow::Result<mpsc::Receiver<String>> {
     let cvt = crate::html2md::get_converter();
-    let res = get(format!("https://data.commoncrawl.org/{path}"))
-        .await?
-        .error_for_status()?;
+    let res = parrarel_stream(&format!("https://data.commoncrawl.org/{path}")).await?;
     let ft = get_model().await?;
     let (send, recv) = mpsc::channel(10000);
     let lang = lang.to_string();
     tokio::spawn(async move {
-        let res = res.bytes_stream().map(|s| match s {
-            Ok(s) => Ok(s),
-            Err(e) => Err(std::io::Error::other(e)),
-        });
         let res = GzipCmdParser::new(StreamReader::new(res))?;
         let mut res = WarcParser::new(StreamReader::new(res));
         let send = send;
