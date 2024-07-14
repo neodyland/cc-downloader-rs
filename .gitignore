@@ -3,3 +3,4 @@ assets/*.bin
 output/*.zstd
 paths
 *.paths
+*.jsonl
