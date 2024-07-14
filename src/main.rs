@@ -22,14 +22,14 @@ async fn main() {
 
 async fn main_inner() -> anyhow::Result<()> {
     let all = &include_str!("../paths").split("\n").collect::<Vec<_>>();
-    let f = File::create(format!(
-        "output/{}.jsonl.zstd",
-        SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros()
-    ))
-    .await?;
-    let mut f = ZstdEncoder::with_quality(BufWriter::new(f), Level::Best);
     for a in all {
         if let Ok(mut stream) = cc_stream::stream(&a, "ja").await {
+            let f = File::create(format!(
+                "output/{}.jsonl.zstd",
+                SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros()
+            ))
+            .await?;
+            let mut f = ZstdEncoder::with_quality(BufWriter::new(f), Level::Best);
             while let Some(s) = stream.recv().await {
                 f.write(
                     stringify(object! {
@@ -41,11 +41,11 @@ async fn main_inner() -> anyhow::Result<()> {
                 f.write("\n".as_bytes()).await?;
                 f.flush().await?;
             }
+            f.shutdown().await?;
             println!("Success: {a}");
         } else {
             println!("Failed: {a}");
         }
     }
-    f.shutdown().await?;
     Ok(())
 }
