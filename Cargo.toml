@@ -1,0 +1,18 @@
+[package]
+name = "cc-dl"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.86"
+async-compression = { version = "0.4.11", features = ["tokio", "zstd"] }
+fasttext = "0.7.8"
+futures-util = { version = "0.3.30" }
+json = "0.12.4"
+reqwest = { version = "0.12.5", features = ["stream", "rustls-tls-webpki-roots"] }
+tl = "0.7.8"
+tokio = { version = "1.38.0", features = ["full"] }
+tokio-util = "0.7.11"
+unicode-normalization = "0.1.23"

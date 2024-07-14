@@ -1,0 +1,5 @@
+/target
+assets/*.bin
+output/*.zstd
+paths
+*.paths
