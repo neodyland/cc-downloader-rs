@@ -1,6 +1,7 @@
 mod cc_stream;
 mod ft;
 mod gz_dec;
+mod html2md;
 mod warc;
 
 use async_compression::{tokio::write::ZstdEncoder, Level};

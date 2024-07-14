@@ -50,6 +50,22 @@ fn detect_language(ft: &LanguagePredictor, body: &str, lang: &str) -> Option<Str
         }
     };
     if !is_lang {
+        if let Some(meta_desc) = parsed.query_selector("html") {
+            for e in meta_desc {
+                if let Some(e) = e.get(parsed.parser()) {
+                    if let Some(e) = e.as_tag() {
+                        if let Some(Some(e)) = e.attributes().get("lang") {
+                            let e = String::from_utf8_lossy(e.as_bytes()).to_string();
+                            if e == "ja".to_string() {
+                                is_lang = true;
+                            }
+                        }
+                    }
+                };
+            }
+        };
+    }
+    if !is_lang {
         if let Some(e) = parsed.query_selector("meta") {
             for e in e {
                 if let Some(e) = e.get(parsed.parser()) {
@@ -120,6 +136,7 @@ fn split_headers(s: &str) -> anyhow::Result<(HashMap<String, String>, String)> {
 }
 
 pub async fn stream(path: &str, lang: &str) -> anyhow::Result<mpsc::Receiver<String>> {
+    let cvt = crate::html2md::get_converter();
     let res = get(format!("https://data.commoncrawl.org/{path}"))
         .await?
         .error_for_status()?;
@@ -151,7 +168,13 @@ pub async fn stream(path: &str, lang: &str) -> anyhow::Result<mpsc::Receiver<Str
                 if let Some(ct) = headers.get("content-type") {
                     if ct.contains("text/html") {
                         if let Some(body) = detect_language(&ft, &body.nfkc().to_string(), &lang) {
-                            send.send(body).await?;
+                            if let Some(body) = crate::html2md::extract(&cvt, &body) {
+                                if let Ok(body) = String::from_utf8(body.as_bytes().to_vec()) {
+                                    send.send(body).await?;
+                                } else {
+                                    println!("Found garbled characters!");
+                                }
+                            }
                         }
                     }
                 }
@@ -170,7 +193,7 @@ pub async fn stream_lot(paths: &[&str], lang: &str) -> mpsc::Receiver<String> {
             let send = send.clone();
             tokio::spawn(async move {
                 while let Some(d) = recv.recv().await {
-                    if let Err(e) = send.send(d).await{
+                    if let Err(e) = send.send(d).await {
                         println!("{e}");
                     };
                 }
