@@ -50,20 +50,20 @@ fn detect_language(ft: &LanguagePredictor, body: &str, lang: &str) -> Option<Str
         }
     };
     if !is_lang {
-        if let Some(meta_desc) = parsed.query_selector("head > meta[content]") {
-            for e in meta_desc {
+        if let Some(e) = parsed.query_selector("meta") {
+            for e in e {
                 if let Some(e) = e.get(parsed.parser()) {
                     if let Some(e) = e.as_tag() {
                         let mut ok = false;
                         if let Some(Some(e)) = e.attributes().get("name") {
                             let e = String::from_utf8_lossy(e.as_bytes()).to_string();
-                            if e.len() > 5 && METAS.contains(&e.as_str()) {
+                            if METAS.contains(&e.as_str()) {
                                 ok = true;
                             }
                         }
                         if let Some(Some(e)) = e.attributes().get("property") {
                             let e = String::from_utf8_lossy(e.as_bytes()).to_string();
-                            if e.len() > 5 && METAS.contains(&e.as_str()) {
+                            if METAS.contains(&e.as_str()) {
                                 ok = true;
                             }
                         }
@@ -79,16 +79,16 @@ fn detect_language(ft: &LanguagePredictor, body: &str, lang: &str) -> Option<Str
                             }
                         }
                     }
-                };
+                }
             }
-        };
+        }
     }
     if !is_lang {
         'a: for t in ["h1", "h2", "h3", "h4", "h5", "h6", "p", "a"] {
             for e in parsed.get_elements_by_class_name(t) {
                 if let Some(e) = e.get(parsed.parser()) {
                     let t = e.inner_text(parsed.parser());
-                    if t.len() > 10 {
+                    if t.len() > 5 {
                         if let Ok(true) = ft.predict(&t, lang) {
                             is_lang = true;
                             break 'a;
@@ -134,7 +134,6 @@ pub async fn stream(path: &str, lang: &str) -> anyhow::Result<mpsc::Receiver<Str
         let res = GzipCmdParser::new(StreamReader::new(res))?;
         let mut res = WarcParser::new(StreamReader::new(res));
         let send = send;
-
         while let Some(rec) = res.next().await {
             let rec = match rec {
                 Ok(rec) => rec,
@@ -171,7 +170,9 @@ pub async fn stream_lot(paths: &[&str], lang: &str) -> mpsc::Receiver<String> {
             let send = send.clone();
             tokio::spawn(async move {
                 while let Some(d) = recv.recv().await {
-                    send.send(d).await.ok();
+                    if let Err(e) = send.send(d).await{
+                        println!("{e}");
+                    };
                 }
             });
         } else {
