@@ -30,7 +30,7 @@ impl LanguagePredictor {
         match self.ft.predict(s, 1, 0.0001) {
             Ok(p) => {
                 for x in p {
-                    if x.label == lab && x.prob > 0.6 {
+                    if x.label == lab && x.prob > 0.0001 {
                         return Ok(true);
                     }
                 }
