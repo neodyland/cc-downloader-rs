@@ -22,7 +22,7 @@ async fn main() {
 async fn main_inner() -> anyhow::Result<()> {
     let all = &include_str!("../paths").split("\n").collect::<Vec<_>>();
     let f = File::create(format!(
-        "output/{}.zstd",
+        "output/{}.jsonl.zstd",
         SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros()
     ))
     .await?;
@@ -39,5 +39,6 @@ async fn main_inner() -> anyhow::Result<()> {
         f.write("\n".as_bytes()).await?;
         f.flush().await?;
     }
+    f.shutdown().await?;
     Ok(())
 }
