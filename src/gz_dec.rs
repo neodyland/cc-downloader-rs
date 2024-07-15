@@ -22,7 +22,7 @@ impl GzipCmdParser {
         let (send, recv) = mpsc::channel(10000);
         tokio::spawn(async move {
             while let Some(Ok(b)) = reader.next().await {
-                stdin.write(&b).await.ok();
+                stdin.write_all(&b).await.ok();
                 stdin.flush().await.ok();
             }
         });

@@ -34,7 +34,7 @@ impl LanguagePredictor {
                         return Ok(true);
                     }
                 }
-                return Ok(false);
+                Ok(false)
             }
             Err(e) => anyhow::bail!(e),
         }
@@ -60,6 +60,7 @@ pub async fn get_model() -> anyhow::Result<LanguagePredictor> {
                 anyhow::bail!(e)
             })?;
         }
+        pth_file.flush()?;
     }
     let mut ft = FastText::new();
     match ft.load_model("./assets/fasttext.bin") {

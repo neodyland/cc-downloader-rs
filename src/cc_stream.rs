@@ -56,7 +56,7 @@ fn detect_language(ft: &LanguagePredictor, body: &str, lang: &str) -> Option<Str
                     if let Some(e) = e.as_tag() {
                         if let Some(Some(e)) = e.attributes().get("lang") {
                             let e = String::from_utf8_lossy(e.as_bytes()).to_string();
-                            if e == "ja".to_string() {
+                            if e == *"ja" {
                                 is_lang = true;
                             }
                         }
@@ -88,7 +88,7 @@ fn detect_language(ft: &LanguagePredictor, body: &str, lang: &str) -> Option<Str
                         }
                         if let Some(Some(e)) = e.attributes().get("content") {
                             if let Ok(true) =
-                                ft.predict(&String::from_utf8_lossy(e.as_bytes()).to_string(), lang)
+                                ft.predict(&String::from_utf8_lossy(e.as_bytes()), lang)
                             {
                                 is_lang = true;
                                 break;
@@ -121,11 +121,11 @@ fn detect_language(ft: &LanguagePredictor, body: &str, lang: &str) -> Option<Str
 }
 
 fn split_headers(s: &str) -> anyhow::Result<(HashMap<String, String>, String)> {
-    let s = s.replace("\r", "");
+    let s = s.replace('\r', "");
     if let Some((h, o)) = s.split_once("\n\n") {
         let mut headers = HashMap::new();
-        for l in h.split("\n") {
-            if let Some((n, v)) = l.split_once(":") {
+        for l in h.split('\n') {
+            if let Some((n, v)) = l.split_once(':') {
                 headers.insert(n.to_lowercase(), v.to_string());
             }
         }

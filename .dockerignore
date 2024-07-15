@@ -1,0 +1,8 @@
+target/
+output/*.jsonl*
+assets/*.bin
+.dockerignore
+Dockerfile
+*.paths
+README.md
+*.sh

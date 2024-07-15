@@ -58,12 +58,12 @@ async fn get_range(
         .send()
         .await
         .context("GET request failed")
-        .map_err(|e| io::Error::other(e))?;
+        .map_err(io::Error::other)?;
 
     response
         .error_for_status_ref()
         .context("GET request returned non-success status code")
-        .map_err(|e| io::Error::other(e))?;
+        .map_err(io::Error::other)?;
 
     if response.status() != StatusCode::PARTIAL_CONTENT {
         return Err(io::Error::other(anyhow::anyhow!(
@@ -73,7 +73,7 @@ async fn get_range(
         )));
     }
 
-    response.bytes().await.map_err(|e| io::Error::other(e))
+    response.bytes().await.map_err(io::Error::other)
 }
 
 pub async fn get_in_parallel(

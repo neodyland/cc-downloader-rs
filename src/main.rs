@@ -10,7 +10,7 @@ use json::{object, stringify};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tokio::{
-    fs::File,
+    fs::{read_to_string, File},
     io::{AsyncWriteExt, BufWriter},
 };
 
@@ -22,9 +22,11 @@ async fn main() {
 }
 
 async fn main_inner() -> anyhow::Result<()> {
-    let all = &include_str!("../paths").split("\n").collect::<Vec<_>>();
+    ft::get_model().await?;
+    let all = read_to_string("./paths").await?;
+    let all = all.split('\n').collect::<Vec<_>>();
     for a in all {
-        if let Ok(mut stream) = cc_stream::stream(&a, "ja").await {
+        if let Ok(mut stream) = cc_stream::stream(a, "ja").await {
             let f = File::create(format!(
                 "output/{}.jsonl.zstd",
                 SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros()
@@ -32,14 +34,14 @@ async fn main_inner() -> anyhow::Result<()> {
             .await?;
             let mut f = ZstdEncoder::with_quality(BufWriter::new(f), Level::Best);
             while let Some(s) = stream.recv().await {
-                f.write(
+                f.write_all(
                     stringify(object! {
                         html: s,
                     })
                     .as_bytes(),
                 )
                 .await?;
-                f.write("\n".as_bytes()).await?;
+                f.write_all("\n".as_bytes()).await?;
                 f.flush().await?;
             }
             f.shutdown().await?;

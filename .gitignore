@@ -4,3 +4,4 @@ output/*.zstd
 paths
 *.paths
 *.jsonl
+docker/

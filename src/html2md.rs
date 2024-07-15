@@ -1,11 +1,12 @@
 use htmd::{options::Options, HtmlToMarkdown};
 
 pub fn get_converter() -> HtmlToMarkdown {
-    let mut opt = Options::default();
-    opt.preformatted_code = true;
     HtmlToMarkdown::builder()
         .skip_tags(vec!["script", "style"])
-        .options(opt)
+        .options(Options {
+            preformatted_code: true,
+            ..Default::default()
+        })
         .build()
 }
 
