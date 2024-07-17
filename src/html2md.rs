@@ -5,6 +5,8 @@ use regex::Regex;
 static RE_IMG: Lazy<Regex> =
     Lazy::new(|| Regex::new("\\[??!??\\[([^\\]]*)\\]\\([^)]*\\)").unwrap());
 
+static RE_HTML: Lazy<Regex> = Lazy::new(|| Regex::new("<[^>]+>[^<]+</[^>]+>|<[^>]+/>").unwrap());
+
 pub fn get_converter() -> HtmlToMarkdown {
     HtmlToMarkdown::builder()
         .skip_tags(vec![
@@ -30,6 +32,7 @@ pub fn extract(cvt: &HtmlToMarkdown, text: &str) -> Option<Vec<String>> {
     for _ in 0..5 {
         text = RE_IMG.replace_all(&text, "$1").to_string();
     }
+    text = RE_HTML.replace_all(&text, "").to_string();
     text = text
         .split('\n')
         .filter(filter_line)
@@ -39,8 +42,13 @@ pub fn extract(cvt: &HtmlToMarkdown, text: &str) -> Option<Vec<String>> {
         text.split("\n\n\n")
             .filter_map(|x| {
                 if x.split('\n')
-                    .all(|x| !(4..=50).contains(&x.char_indices().count()))
-                    && !x.trim().is_empty()
+                    .filter(|x| (4..=50).contains(&x.char_indices().count()))
+                    .collect::<Vec<_>>()
+                    .len()
+                    * 2
+                    / 3
+                    > x.split('\n').collect::<Vec<_>>().len()
+                    && x.trim().char_indices().count() > 50
                 {
                     Some(x.trim().to_string())
                 } else {
