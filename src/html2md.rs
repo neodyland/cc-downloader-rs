@@ -5,7 +5,7 @@ use regex::Regex;
 static RE_IMG: Lazy<Regex> =
     Lazy::new(|| Regex::new("\\[??!??\\[([^\\]]*)\\]\\([^)]*\\)").unwrap());
 
-static RE_HTML: Lazy<Regex> = Lazy::new(|| Regex::new("<[^>]+>[^<]+</[^>]+>|<[^>]+/>").unwrap());
+static RE_HTML: Lazy<Regex> = Lazy::new(|| Regex::new("<[^>]+>[^<]+<[^>]+>|<[^>]+>").unwrap());
 
 pub fn get_converter() -> HtmlToMarkdown {
     HtmlToMarkdown::builder()
