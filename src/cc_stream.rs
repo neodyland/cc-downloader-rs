@@ -1,12 +1,12 @@
 use futures_util::StreamExt;
-use std::collections::HashMap;
+use reqwest::get;
+use std::{collections::HashMap, io};
 use tl::{parse, ParserOptions};
 use tokio::sync::mpsc;
 use tokio_util::io::StreamReader;
 use unicode_normalization::UnicodeNormalization;
 
 use crate::{
-    fast_dl::parrarel_stream,
     ft::{get_model, LanguagePredictor},
     gz_dec::GzipCmdParser,
     warc::WarcParser,
@@ -137,7 +137,14 @@ fn split_headers(s: &str) -> anyhow::Result<(HashMap<String, String>, String)> {
 
 pub async fn stream(path: &str, lang: &str) -> anyhow::Result<mpsc::Receiver<String>> {
     let cvt = crate::html2md::get_converter();
-    let res = parrarel_stream(&format!("https://data.commoncrawl.org/{path}")).await?;
+    let res = get(&format!("https://data.commoncrawl.org/{path}"))
+        .await?
+        .error_for_status()?
+        .bytes_stream()
+        .map(|s| match s {
+            Ok(o) => Ok(o),
+            Err(e) => Err(io::Error::other(e)),
+        });
     let ft = get_model().await?;
     let (send, recv) = mpsc::channel(10000);
     let lang = lang.to_string();
@@ -154,19 +161,20 @@ pub async fn stream(path: &str, lang: &str) -> anyhow::Result<mpsc::Receiver<Str
                 }
             };
             if rec.header.get("warc-type") == Some(&"response".to_string()) {
-                let s = String::from_utf8_lossy(&rec.content).to_string();
-                let (headers, body) = match split_headers(&s) {
-                    Ok(x) => x,
-                    Err(_) => continue,
-                };
-                if let Some(ct) = headers.get("content-type") {
-                    if ct.contains("text/html") {
-                        if let Some(body) = detect_language(&ft, &body.nfkc().to_string(), &lang) {
-                            if let Some(body) = crate::html2md::extract(&cvt, &body) {
-                                if let Ok(body) = String::from_utf8(body.as_bytes().to_vec()) {
-                                    send.send(body).await?;
-                                } else {
-                                    println!("Found garbled characters!");
+                if let Ok(s) = String::from_utf8(rec.content) {
+                    let (headers, body) = match split_headers(&s) {
+                        Ok(x) => x,
+                        Err(_) => continue,
+                    };
+                    if let Some(ct) = headers.get("content-type") {
+                        if ct.contains("text/html") {
+                            if let Some(body) =
+                                detect_language(&ft, &body.nfkc().to_string(), &lang)
+                            {
+                                if let Some(body) = crate::html2md::extract(&cvt, &body) {
+                                    for x in body {
+                                        send.send(x).await?;
+                                    }
                                 }
                             }
                         }
