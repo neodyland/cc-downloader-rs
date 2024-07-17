@@ -40,7 +40,7 @@ pub fn extract(cvt: &HtmlToMarkdown, text: &str) -> Option<Vec<String>> {
             .filter_map(|x| {
                 if x.split('\n')
                     .all(|x| !(4..=50).contains(&x.char_indices().count()))
-                    && !x.is_empty()
+                    && !x.trim().is_empty()
                 {
                     Some(x.trim().to_string())
                 } else {
