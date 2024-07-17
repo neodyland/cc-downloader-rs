@@ -47,7 +47,7 @@ pub fn extract(cvt: &HtmlToMarkdown, text: &str) -> Option<Vec<String>> {
                     .len()
                     * 2
                     / 3
-                    > x.split('\n').collect::<Vec<_>>().len()
+                    < x.split('\n').collect::<Vec<_>>().len()
                     && x.trim().char_indices().count() > 50
                 {
                     Some(x.trim().to_string())
