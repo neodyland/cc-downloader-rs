@@ -10,7 +10,7 @@ static RE_HTML: Lazy<Regex> = Lazy::new(|| Regex::new("<[^>]+>[^<]+<[^>]+>|<[^>]
 pub fn get_converter() -> HtmlToMarkdown {
     HtmlToMarkdown::builder()
         .skip_tags(vec![
-            "script", "style", "header", "footer", "section", "nav", "img", "video", "iframe",
+            "script", "style", "header", "footer", "nav", "img", "video", "iframe",
         ])
         .options(Options {
             preformatted_code: true,
