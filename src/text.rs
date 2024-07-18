@@ -1,12 +1,11 @@
 use crate::{cc_stream::detect_language, ft::LanguagePredictor};
 
-static BADWORDS: [&str; 84] = [
+static BADWORDS: [&str; 85] = [
     "ヤリマン",
     "πモミモミ",
     "風俗",
     "関連項目",
     "sex",
-    "爆乳",
     "SEX",
     "ナンパ",
     "死ね",
@@ -85,15 +84,22 @@ static BADWORDS: [&str; 84] = [
     "口コミ",
     "出逢い系アプリ",
     "出合いけいアプリ",
+    "爆乳",
+    "美肌",
 ];
 
 pub fn extract(ft: &LanguagePredictor, text: &str) -> Vec<String> {
     let text = text.split('\n');
     let mut res = vec![];
     let mut tmp = String::new();
-    for t in text {
+    'tl: for t in text {
         let t = t.trim();
-        if t.ends_with('。') && t.len() > 10 && detect_language(ft, t) && !BADWORDS.contains(&t) {
+        if t.ends_with('。') && t.len() > 10 && detect_language(ft, t) {
+            for bw in BADWORDS {
+                if t.contains(bw) {
+                    continue 'tl;
+                }
+            }
             tmp.push('\n');
             tmp.push_str(t);
         } else {
