@@ -1,6 +1,6 @@
 /target
 assets/*.bin
-output/*.zstd
+output/*.jsonl*
 paths
 *.paths
 *.jsonl
