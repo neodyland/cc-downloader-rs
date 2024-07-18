@@ -36,7 +36,7 @@ fn extract_sentence_filter(s: &String) -> Option<String> {
     }
     let eng_ratio = s
         .char_indices()
-        .filter(|(_, x)| x.is_alphanumeric())
+        .filter(|(_, x)| x.is_ascii_alphanumeric())
         .count() as f32
         / s.char_indices().count() as f32;
     if eng_ratio > 0.4 {
