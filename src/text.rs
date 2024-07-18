@@ -11,7 +11,7 @@ pub fn extract(ft: &LanguagePredictor, text: &str) -> Vec<String> {
             tmp.push_str(t);
         } else {
             let tmp_t = tmp.trim().to_string();
-            if !tmp_t.is_empty() {
+            if tmp_t.len() > 50 {
                 res.push(tmp_t);
             }
             tmp.clear();
