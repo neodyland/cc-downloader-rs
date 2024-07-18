@@ -1,7 +1,7 @@
 mod cc_stream;
 mod ft;
 mod gz_dec;
-mod html2md;
+mod text;
 mod warc;
 
 use json::{object, stringify};
@@ -21,7 +21,7 @@ async fn main() {
 
 async fn main_inner() -> anyhow::Result<()> {
     ft::get_model().await?;
-    let all = read_to_string("./paths").await?;
+    let all = read_to_string("./paths").await?.trim().to_string();
     let all = all.split('\n').collect::<Vec<_>>();
     let mut f = BufWriter::new(
         File::create(format!(
@@ -31,7 +31,7 @@ async fn main_inner() -> anyhow::Result<()> {
         .await?,
     );
     for a in all {
-        if let Ok(mut stream) = cc_stream::stream(a, "ja").await {
+        if let Ok(mut stream) = cc_stream::stream(a).await {
             while let Some(s) = stream.recv().await {
                 f.write_all(
                     stringify(object! {
