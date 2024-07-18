@@ -4,6 +4,7 @@ mod gz_dec;
 mod text;
 mod warc;
 
+use async_compression::tokio::write::GzipEncoder;
 use json::{object, stringify};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -24,13 +25,13 @@ async fn main_inner() -> anyhow::Result<()> {
     ft::get_model().await?;
     let all = read_to_string("./paths").await?.trim().to_string();
     let all = all.split('\n').collect::<Vec<_>>();
-    let mut f = BufWriter::new(
+    let mut f = GzipEncoder::new(BufWriter::new(
         File::create(format!(
-            "output/{}.jsonl",
+            "output/{}.jsonl.gz",
             SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros()
         ))
         .await?,
-    );
+    ));
     for a in all {
         let mut stream = cc_stream::stream(a).await;
         let mut attempt = 0;
