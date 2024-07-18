@@ -94,7 +94,7 @@ pub fn extract(ft: &LanguagePredictor, text: &str) -> Vec<String> {
     let mut tmp = String::new();
     'tl: for t in text {
         let t = t.trim();
-        if t.ends_with('。') && t.len() > 10 && detect_language(ft, t) {
+        if t.ends_with('。') && t.char_indices().count() > 10 && detect_language(ft, t) {
             for bw in BADWORDS {
                 if t.contains(bw) {
                     continue 'tl;
@@ -104,7 +104,7 @@ pub fn extract(ft: &LanguagePredictor, text: &str) -> Vec<String> {
             tmp.push_str(t);
         } else {
             let tmp_t = tmp.trim().to_string();
-            if tmp_t.len() > 50 {
+            if tmp_t.char_indices().count() > 50 {
                 res.push(tmp_t);
             }
             tmp.clear();
