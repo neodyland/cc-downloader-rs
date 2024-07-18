@@ -50,8 +50,8 @@ pub async fn stream(path: &str) -> anyhow::Result<mpsc::Receiver<String>> {
                 }
             };
             if let Ok(body) = String::from_utf8(rec.content) {
-                if detect_language(&ft, &body.nfkc().to_string()) {
-                    for body in crate::text::extract(&ft, &body) {
+                if detect_language(&ft, &body) {
+                    for body in crate::text::extract(&ft, &body.nfkc().to_string()) {
                         send.send(body).await?;
                     }
                 }

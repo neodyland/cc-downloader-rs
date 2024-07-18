@@ -10,6 +10,8 @@ anyhow = "1.0.86"
 fasttext = "0.7.8"
 futures-util = { version = "0.3.30" }
 json = "0.12.4"
+lindera = { version = "0.32.2", features = ["unidic"] }
+once_cell = "1.19.0"
 reqwest = { version = "0.12.5", features = ["stream", "rustls-tls-webpki-roots"] }
 tokio = { version = "1.38.0", features = ["full"] }
 tokio-stream = "0.1.15"

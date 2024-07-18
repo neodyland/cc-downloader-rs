@@ -1,6 +1,52 @@
 use crate::{cc_stream::detect_language, ft::LanguagePredictor};
+use lindera::{DictionaryConfig, DictionaryKind, Mode, Tokenizer, TokenizerConfig};
+use once_cell::sync::Lazy;
 
-static BADWORDS: [&str; 85] = [
+static JP: Lazy<Tokenizer> = Lazy::new(|| {
+    let dictionary = DictionaryConfig {
+        kind: Some(DictionaryKind::UniDic),
+        path: None,
+    };
+
+    let config = TokenizerConfig {
+        dictionary,
+        user_dictionary: None,
+        mode: Mode::Normal,
+    };
+    Tokenizer::from_config(config).unwrap()
+});
+
+fn extract_sentence_filter(s: &String) -> Option<String> {
+    let tok = JP.tokenize(s).ok()?;
+    let mut tokens = 0;
+    let mut not_noun_verb_adj = 0;
+    for mut t in tok {
+        tokens += 1;
+        if let Some(d) = t.get_details() {
+            let ty = d.first().unwrap_or(&"Unknown");
+            match *ty {
+                "名詞" | "動詞" | "形容詞" => {}
+                _ => not_noun_verb_adj += 1,
+            }
+        };
+    }
+    let not_noun_verb_adj = not_noun_verb_adj as f32 / tokens as f32;
+    if !(0.15..=0.85).contains(&not_noun_verb_adj) {
+        return None;
+    }
+    let eng_ratio = s
+        .char_indices()
+        .filter(|(_, x)| x.is_alphanumeric())
+        .count() as f32
+        / s.char_indices().count() as f32;
+    if eng_ratio > 0.4 {
+        return None;
+    }
+    Some(s.to_string())
+}
+
+static BADWORDS: [&str; 92] = [
+    "貧乳",
     "ヤリマン",
     "πモミモミ",
     "風俗",
@@ -86,15 +132,27 @@ static BADWORDS: [&str; 85] = [
     "出合いけいアプリ",
     "爆乳",
     "美肌",
+    "レビュー",
+    "キャンペーン",
+    "ポイント",
+    "分割払い",
+    "リボ払い",
+    "メルマガ",
 ];
 
 pub fn extract(ft: &LanguagePredictor, text: &str) -> Vec<String> {
     let text = text.split('\n');
     let mut res = vec![];
     let mut tmp = String::new();
+    let mut space_lines = 0;
+    let mut joint_last = false;
     'tl: for t in text {
         let t = t.trim();
         if t.ends_with('。') && t.char_indices().count() > 10 && detect_language(ft, t) {
+            if space_lines > 0 && space_lines < 3 {
+                joint_last = true;
+            }
+            space_lines = 0;
             for bw in BADWORDS {
                 if t.contains(bw) {
                     continue 'tl;
@@ -103,12 +161,19 @@ pub fn extract(ft: &LanguagePredictor, text: &str) -> Vec<String> {
             tmp.push('\n');
             tmp.push_str(t);
         } else {
+            space_lines += 1;
             let tmp_t = tmp.trim().to_string();
             if tmp_t.char_indices().count() > 50 {
-                res.push(tmp_t);
+                if joint_last && !res.is_empty() {
+                    let index = res.len() - 1;
+                    res[index] = format!("{}\n{}", res[res.len() - 1], tmp_t)
+                } else {
+                    res.push(tmp_t);
+                }
             }
+            joint_last = false;
             tmp.clear();
         }
     }
-    res
+    res.iter().filter_map(extract_sentence_filter).collect()
 }
