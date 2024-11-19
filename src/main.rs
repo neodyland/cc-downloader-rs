@@ -20,14 +20,14 @@ use tokio::{
 };
 
 async fn write_chunk_to_parquet(
-    string_builder: &StringBuilder,
+    mut string_builder: StringBuilder,
     file_counter: usize,
 ) -> anyhow::Result<()> {
     let schema = Schema::new(vec![Field::new("text", DataType::Utf8, false)]);
 
     let batch = RecordBatch::try_new(
         Arc::new(schema.clone()),
-        vec![Arc::new(string_builder.finish_cloned())],
+        vec![Arc::new(string_builder.finish())],
     )?;
     let file = File::create(format!("output/part_{:05}.parquet", file_counter)).await?;
 
@@ -67,8 +67,8 @@ async fn main_inner() -> anyhow::Result<()> {
         let mut stream = stream.unwrap();
         while let Some(s) = stream.recv().await {
             string_builder.append_value(s);
-            if string_builder.len() == 2500000 {
-                write_chunk_to_parquet(&string_builder, file_counter).await?;
+            if string_builder.len() == 2 {
+                write_chunk_to_parquet(string_builder, file_counter).await?;
                 string_builder = StringBuilder::new();
                 file_counter += 1;
             }
@@ -76,7 +76,7 @@ async fn main_inner() -> anyhow::Result<()> {
         println!("Success: {a}");
     }
     if !string_builder.is_empty() {
-        write_chunk_to_parquet(&string_builder, file_counter).await?;
+        write_chunk_to_parquet(string_builder, file_counter).await?;
     }
     Ok(())
 }

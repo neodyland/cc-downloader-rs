@@ -10,7 +10,6 @@ anyhow = "1.0.93"
 arrow = "53.2.0"
 encoding_rs = "0.8.35"
 futures-util = { version = "0.3.31" }
-htmd = "0.1.6"
 parquet = { version = "53.2.0", features = ["async"] }
 regex = "1.11.1"
 reqwest = { version = "0.12.9", features = ["stream", "rustls-tls-webpki-roots"] }

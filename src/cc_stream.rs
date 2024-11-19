@@ -1,5 +1,4 @@
 use futures_util::StreamExt;
-use htmd::{Element, HtmlToMarkdown};
 use regex::Regex;
 use reqwest::get;
 use std::io;
@@ -23,10 +22,6 @@ pub async fn stream(path: &str) -> anyhow::Result<mpsc::Receiver<String>> {
         let res = GzipCmdParser::new(StreamReader::new(res))?;
         let mut res = WarcParser::new(StreamReader::new(res));
         let send = send;
-        let converter = HtmlToMarkdown::builder()
-            .skip_tags(vec!["script", "style", "img", "video"])
-            .add_handler(vec!["a"], |e: Element| Some(e.content.to_string()))
-            .build();
         let re_jp = Regex::new(
             r"([ぁ-んァ-ン -~！”＃＄％＆’（）*+，−．／：；＜＝＞？＠［＼］＾＿｀｛｜｝〜]+)",
         )
@@ -39,9 +34,7 @@ pub async fn stream(path: &str) -> anyhow::Result<mpsc::Receiver<String>> {
                 }
             };
             if detect_language(&rec.content) {
-                if let Ok(body) =
-                    crate::text::extract(&converter, &re_jp, &rec.content.nfkc().to_string())
-                {
+                if let Ok(body) = crate::text::extract(&re_jp, &rec.content.nfkc().to_string()) {
                     send.send(body).await?;
                 }
             }

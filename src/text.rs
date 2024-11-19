@@ -1,4 +1,3 @@
-use htmd::HtmlToMarkdown;
 use regex::Regex;
 static MAX_DISTANCE: usize = 25;
 
@@ -27,15 +26,14 @@ fn detect_jp_ratio(re_jp: &Regex, s: &str) -> bool {
     (total_len as f32) / (s.chars().count() as f32) > 0.55
 }
 
-pub fn extract(converter: &HtmlToMarkdown, re_jp: &Regex, text: &str) -> anyhow::Result<String> {
-    let text = converter.convert(text)?;
+pub fn extract(re_jp: &Regex, text: &str) -> anyhow::Result<String> {
     if text.chars().count() < 20 {
         anyhow::bail!("Too short")
     }
     let mut texts = vec!["".to_string()];
     let mut last_end = 0;
     let mut current_text_index = 0;
-    for cap in re_jp.captures_iter(&text) {
+    for cap in re_jp.captures_iter(text) {
         if let Some(cap) = cap.get(0) {
             let start = cap.start();
             let end = cap.end();
