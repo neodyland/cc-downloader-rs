@@ -1,7 +1,7 @@
 /target
 assets/*.bin
-output/*.jsonl*
+output/*.parquet*
 paths
 *.paths
-*.jsonl
+*.parquet
 docker/

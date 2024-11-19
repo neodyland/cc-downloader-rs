@@ -1,6 +1,6 @@
 mod cc_stream;
-mod ft;
 mod gz_dec;
+mod http;
 mod text;
 mod warc;
 
@@ -51,7 +51,6 @@ async fn main() {
 }
 
 async fn main_inner() -> anyhow::Result<()> {
-    ft::get_model().await?;
     let all = read_to_string("./paths").await?.trim().to_string();
     let all = all.split('\n').collect::<Vec<_>>();
     let mut string_builder = StringBuilder::new();
