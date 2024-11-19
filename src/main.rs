@@ -1,6 +1,5 @@
 mod cc_stream;
 mod gz_dec;
-mod http;
 mod text;
 mod warc;
 

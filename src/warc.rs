@@ -67,8 +67,6 @@ impl<R: AsyncReadExt + Unpin> WarcParser<R> {
         self.reader.read_exact(&mut buffer).await?;
         let content = Self::try_decode(encoding_rs::UTF_8, &content)
             .or_else(|_| Self::try_decode(encoding_rs::SHIFT_JIS, &content))?;
-        let content = crate::http::parse_http_response(&content)
-            .ok_or(anyhow::anyhow!("http parse failed"))?;
         Ok(WarcRecord { header, content })
     }
     fn try_decode(
