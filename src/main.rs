@@ -66,7 +66,7 @@ async fn main_inner() -> anyhow::Result<()> {
         let mut stream = stream.unwrap();
         while let Some(s) = stream.recv().await {
             string_builder.append_value(s);
-            if string_builder.len() == 2 {
+            if string_builder.len() == 1_000_000 {
                 write_chunk_to_parquet(string_builder, file_counter).await?;
                 string_builder = StringBuilder::new();
                 file_counter += 1;
