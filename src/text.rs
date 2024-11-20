@@ -104,7 +104,7 @@ fn calculate_sentence_score(tok: &Tokenizer, sentence: &str) -> (f64, String) {
 
     let mut content_words = Vec::new();
     let mut function_words = Vec::new();
-    let mut cleaned_sentence = String::new();
+    let mut cleaned_sentence = Vec::new();
     let mut start = true;
 
     // Process each token
@@ -114,13 +114,17 @@ fn calculate_sentence_score(tok: &Tokenizer, sentence: &str) -> (f64, String) {
         let pos_one = token.get_detail(1).unwrap_or("Unknown").to_string();
         let pos_one = pos_one.as_str();
         let surface = token.text.to_string();
+        let surface = surface.as_str();
 
         // Skip certain words at the start
-        if start && ["助詞", "副詞", "接続詞", "助動詞"].contains(&pos) {
+        if start
+            && (["助詞", "副詞", "接続詞", "助動詞"].contains(&pos)
+                || ["、", ","].contains(&surface))
+        {
             continue;
         } else {
             start = false;
-            cleaned_sentence.push_str(&surface);
+            cleaned_sentence.push(surface.to_string());
         }
 
         // Categorize words
@@ -128,11 +132,11 @@ fn calculate_sentence_score(tok: &Tokenizer, sentence: &str) -> (f64, String) {
             && !pos_one.contains("非自立")
             && !pos_one.contains("助動詞")
             && !pos_one.contains("空白")
-            && !["する", "ある", "いる", "なる"].contains(&surface.as_str())
+            && !["する", "ある", "いる", "なる"].contains(&surface)
         {
-            content_words.push(surface);
+            content_words.push(surface.to_string());
         } else if ["助詞", "助動詞"].contains(&pos) || pos_one.contains("非自立") {
-            function_words.push(surface);
+            function_words.push(surface.to_string());
         }
     }
 
@@ -145,14 +149,14 @@ fn calculate_sentence_score(tok: &Tokenizer, sentence: &str) -> (f64, String) {
         let content_ratio = content_words.len() as f64 / total_words as f64;
         score *= 0.6 + content_ratio;
     }
-
+    let cleaned_sentence = cleaned_sentence.join("");
     // 2. Length-based scoring
     let length = cleaned_sentence.chars().count();
     score *= match length {
         0..=9 => 0.0,
         10..=19 => 1.0,
         20..=80 => 1.2,
-        81..=100 => 1.0,
+        81..=200 => 1.0,
         _ => 0.7,
     };
 
@@ -250,6 +254,8 @@ pub fn clean(tok: &Tokenizer, text: String) -> anyhow::Result<Vec<String>> {
     if !current_group.is_empty() {
         result.push(current_group.join(""));
     }
-
-    Ok(result)
+    Ok(result
+        .into_iter()
+        .filter(|x| x.chars().count() > 30)
+        .collect())
 }
