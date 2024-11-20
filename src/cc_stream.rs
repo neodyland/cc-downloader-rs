@@ -6,7 +6,11 @@ use tokio::sync::mpsc;
 use tokio_util::io::StreamReader;
 use unicode_normalization::UnicodeNormalization;
 
-use crate::{gz_dec::GzipCmdParser, text::detect_language, warc::WarcParser};
+use crate::{
+    gz_dec::GzipCmdParser,
+    text::{detect_language, get_tokenizer},
+    warc::WarcParser,
+};
 
 pub async fn stream(path: &str) -> anyhow::Result<mpsc::Receiver<String>> {
     let res = get(&format!("https://data.commoncrawl.org/{path}"))
@@ -26,6 +30,7 @@ pub async fn stream(path: &str) -> anyhow::Result<mpsc::Receiver<String>> {
             r"([ぁ-んァ-ン -~！”＃＄％＆’（）*+，−．／：；＜＝＞？＠［＼］＾＿｀｛｜｝〜]+)",
         )
         .unwrap();
+        let tok = get_tokenizer();
         while let Some(rec) = res.next().await {
             let rec = match rec {
                 Ok(rec) => rec,
@@ -34,8 +39,12 @@ pub async fn stream(path: &str) -> anyhow::Result<mpsc::Receiver<String>> {
                 }
             };
             if detect_language(&rec.content) {
-                if let Ok(body) = crate::text::extract(&re_jp, &rec.content.nfkc().to_string()) {
-                    send.send(body).await?;
+                if let Ok(body) =
+                    crate::text::extract(&re_jp, &tok, &rec.content.nfkc().to_string())
+                {
+                    for body in body {
+                        send.send(body).await?;
+                    }
                 }
             }
         }
